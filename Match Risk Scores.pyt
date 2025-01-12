@@ -37,13 +37,13 @@ def load_field_selection(input_layer, fields = False, messages = False):
     InputTable = pd.DataFrame(InputTable)
 
     return InputTable
-    
+
 def risk_in_range(
-        x, LookUpTable, empty_val, lookup_NumericMinCol, lookup_NumericMaxCol, 
+        x, LookUpTable, empty_val, lookup_NumericMinCol, lookup_NumericMaxCol,
         lookup_RiskScoreCol
         ):
         '''
-        Returns a risk value based on the numeric range that contains x. 
+        Returns a risk value based on the numeric range that contains x.
         Intended to be used within a row-wise function.
 
         x: Float
@@ -59,24 +59,24 @@ def risk_in_range(
         '''
         risk_val = float(
             LookUpTable.loc[
-                (x >= LookUpTable[lookup_NumericMinCol]) & 
-                (x < LookUpTable[lookup_NumericMaxCol]), 
+                (x >= LookUpTable[lookup_NumericMinCol]) &
+                (x < LookUpTable[lookup_NumericMaxCol]),
                 lookup_RiskScoreCol
                 ].max()
             )
-        
+
         # if the risk val does not equal itself (i.e. NaN value)
         if risk_val != risk_val:
             # return the filler value
             return empty_val
         else:
             return risk_val
-            
+
 def risk_for_cat(
         x, LookUpTable, empty_val, lookup_CatCol, lookup_RiskScoreCol
         ):
         '''
-        Returns a risk value based on the category that corresponds to x. 
+        Returns a risk value based on the category that corresponds to x.
         Intended to be used within a row-wise function.
 
         x: String
@@ -110,7 +110,7 @@ def get_id_field(input, messages):
     messages: arcpy message object
         Used to write messages to the ArcGIS console when running
     '''
-    # 
+    #
     fields = [x.name for x in arcpy.ListFields(input)]
     if 'OBJECTID' in fields:
         return 'OBJECTID'
@@ -146,7 +146,7 @@ def duplicate_field_check(df_current_name, df_add, check_fields):
     rename_dict = {}
     for key in check_fields:
         # if the 10 character long field name is in the current list of
-        # fields         
+        # fields
         if key[0:10] in df_current_fields:
             # create a field name that doesnt exist in the current df
             i = 1
@@ -170,11 +170,11 @@ def remove_LLUR_overlaps(
     '''
     IN DEV
 
-    input : 
+    input :
         polygon inputs to identify overlaps between
     id_col :
         "SiteID"
-    overlap_name : 
+    overlap_name :
         name of the layer that will be created showing overlaps between
     no_overlap_name :
         name of the output layer that will be the input layer without any
@@ -182,7 +182,7 @@ def remove_LLUR_overlaps(
     overlap_percent :
         the percent threshold
     '''
-    
+
     #if the input is stored in layer group, seperate the layer name from
     # the folder path of the layer group
     input_name = input.split("\\")[-1]
@@ -190,11 +190,11 @@ def remove_LLUR_overlaps(
     # create a layer of the intersecting area of polygons
     # the layer will go to the default geodatabase
     arcpy.analysis.Intersect(
-        in_features = [input, input], 
+        in_features = [input, input],
         out_feature_class = overlap_name,
         join_attributes = "ALL"
         )
-    
+
     # path to the new layer in the default gdb
     overlap_ref = os.path.join(arcpy.env.workspace, overlap_name)
     # remove all intersections that are the same polygons intersecting
@@ -217,7 +217,7 @@ def remove_LLUR_overlaps(
         "AREA_M2_1": "childArea"
     }
     for f in field_renaming:
-        
+
         arcpy.management.AlterField(
             in_table = overlap_ref,
             field = f,
@@ -237,7 +237,7 @@ def remove_LLUR_overlaps(
 
     # add a universal ID for overlapping polygons
     codeblock = """def get_universal_id(id1, id2):
-                        # pad each id with leading zeros to make a 6 
+                        # pad each id with leading zeros to make a 6
                         # digit string
                         id1_pad = str(id1).zfill(6)
                         id2_pad = str(id2).zfill(6)
@@ -267,7 +267,7 @@ def remove_LLUR_overlaps(
         expression_type = "PYTHON3",
         field_type = "FLOAT"
     )
-    # identify overlapping polygons that have occured from drawing errors where 
+    # identify overlapping polygons that have occured from drawing errors where
     # the parent overlaps with the child < X% and
     # the child overlaps with the parent < X%
     # having this rule satisfied both ways means that small polygons intentionally
@@ -290,7 +290,7 @@ def remove_LLUR_overlaps(
                     OIDs_not_errors[row[0]].append("small overlap")
                 else:
                     OIDs_not_errors[row[0]].append("large overlap")
-    
+
     # remove these polygons from the master layer
     with arcpy.da.UpdateCursor(
         in_table = overlap_ref,
@@ -404,7 +404,7 @@ class custom_join(object):
 
         params.extend([left_input, right_input, left_join_fields, right_join_fields,
                     right_fields_keep, output_field_count])
-        
+
         #params.extend([left_input, right_input, left_join_fields, right_join_fields,
         #    right_fields_keep, rename_right, output_field_count])
         return params
@@ -426,7 +426,7 @@ class custom_join(object):
             #if parameters[5].value is None:
             #    parameters[5].value = [[field, field] for field in fields]
             return
-       
+
     def updateMessages(self, parameters):
         """Modify the messages created by internal validation for each tool
         parameter.  This method is called after internal validation."""
@@ -565,7 +565,7 @@ class custom_join(object):
 class combine_LLUR_layers(object):
 
     '''
-    Combine the LLUR site and activity layers based on overlap 
+    Combine the LLUR site and activity layers based on overlap
     '''
 
     def __init__(self):
@@ -575,9 +575,9 @@ class combine_LLUR_layers(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        
+
         params = []
-        # Parameter 1: Input feature layer
+        # Parameter 0: Input feature layer
         ActivityLayer = arcpy.Parameter(
             displayName = "Activity Layer",
             name = "ActivityLayer",
@@ -585,6 +585,7 @@ class combine_LLUR_layers(object):
             parameterType = "Required",
             direction = "Input"
         )
+        #param 1: input site layer
         SiteLayer = arcpy.Parameter(
             displayName = "Site Layer",
             name = "SiteLayer",
@@ -592,6 +593,7 @@ class combine_LLUR_layers(object):
             parameterType = "Required",
             direction = "Input"
         )
+        #param 2: ouput polygons
         output = arcpy.Parameter(
             displayName="Output Intersected Polygon",
             name="output_intersect",
@@ -599,6 +601,7 @@ class combine_LLUR_layers(object):
             parameterType="Required",
             direction="Output"
         )
+        #param 3: input threshold
         OverlapPerc = arcpy.Parameter(
             displayName="Overlap Percentage Threshold",
             name="overlap_percentage_threshold",
@@ -613,7 +616,7 @@ class combine_LLUR_layers(object):
         params.append(OverlapPerc)
 
         return params
- 
+
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
         return True
@@ -640,12 +643,12 @@ class combine_LLUR_layers(object):
         # create a layer of polygons at covering the intersecting area of
         # "Sites" and "Activities"
         arcpy.analysis.Intersect(
-            in_features = [activities, sites], 
+            in_features = [activities, sites],
             out_feature_class = output
             )
-        
+
         # Calculate areas of intersected polygons
-        arcpy.management.CalculateGeometryAttributes(output, [["SiteAct_A", "AREA"]])        
+        arcpy.management.CalculateGeometryAttributes(output, [["SiteAct_A", "AREA"]])
         # Add a field to store the overlap percentage
         arcpy.management.AddField(output, "Area_Per", "DOUBLE")
         # Add a field to stored whether an activity is fully contained within a
@@ -658,7 +661,7 @@ class combine_LLUR_layers(object):
         site_area_dict = {}
         site_geom_dict = {}
         with arcpy.da.SearchCursor(
-            in_table = sites, 
+            in_table = sites,
             field_names = ["OBJECTID", "SHAPE@AREA", "SHAPE@"]
             ) as cursor:
             for row in cursor:
@@ -677,8 +680,8 @@ class combine_LLUR_layers(object):
         # with the surrounding "Site" polgons and check if each "Site-Activity"
         # polygon is fully contained with a "Site" polygon
         with arcpy.da.UpdateCursor(
-            in_table = output, 
-            field_names = [    
+            in_table = output,
+            field_names = [
                 "FID_L1Sites",      #0
                 "FID_L5Activities", #1
                 "SHAPE@",           #2
@@ -714,7 +717,7 @@ class combine_LLUR_layers(object):
             for row in cursor:
                 if row[0] <= overlap_threshold and row[1] == 0:
                     cursor.deleteRow()
-        
+
         return
 
 class combine_LLUR_layers_InDev(object):
@@ -726,9 +729,9 @@ class combine_LLUR_layers_InDev(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        
+
         params = []
-        # Parameter 1: Input feature layer
+        # Parameter 0: Input feature layer
         ActivityLayer = arcpy.Parameter(
             displayName = "Activity Layer",
             name = "ActivityLayer",
@@ -736,6 +739,7 @@ class combine_LLUR_layers_InDev(object):
             parameterType = "Required",
             direction = "Input"
         )
+        #param 1: input jin layer
         SiteLayer = arcpy.Parameter(
             displayName = "Site Layer",
             name = "SiteLayer",
@@ -743,6 +747,7 @@ class combine_LLUR_layers_InDev(object):
             parameterType = "Required",
             direction = "Input"
         )
+        #param 2: ouput/updated poly
         output = arcpy.Parameter(
             displayName="Output Intersected Polygon",
             name="output_intersect",
@@ -750,6 +755,7 @@ class combine_LLUR_layers_InDev(object):
             parameterType="Required",
             direction="Output"
         )
+        #param 3: input percent threshold
         OverlapPerc = arcpy.Parameter(
             displayName="Overlap Percentage Threshold",
             name="overlap_percentage_threshold",
@@ -764,7 +770,7 @@ class combine_LLUR_layers_InDev(object):
         params.append(OverlapPerc)
 
         return params
- 
+
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
         return True
@@ -782,7 +788,7 @@ class combine_LLUR_layers_InDev(object):
         return
 
     def execute(self, parameters, messages):
-            
+
         activities = parameters[0].valueAsText
         sites = parameters[1].valueAsText
         output = parameters[2].valueAsText
@@ -808,14 +814,14 @@ class combine_LLUR_layers_InDev(object):
         # "Sites" and "Activities"
         arcpy.analysis.Intersect(
             in_features = [
-                os.path.join(arcpy.env.workspace, "LLUR_act_NO_overlap"), 
+                os.path.join(arcpy.env.workspace, "LLUR_act_NO_overlap"),
                 os.path.join(arcpy.env.workspace, "LLUR_sites_NO_overlap")
-                ], 
+                ],
             out_feature_class = output
             )
         # Calculate areas of intersected polygons
         arcpy.management.CalculateGeometryAttributes(output, [["SiteAct_A", "AREA"]])
-        
+
         # Add a field to store the overlap percentage
         arcpy.management.AddField(output, "Area_Per", "DOUBLE")
         # Add a field to stored whether an activity is fully contained within a
@@ -828,7 +834,7 @@ class combine_LLUR_layers_InDev(object):
         site_area_dict = {}
         site_geom_dict = {}
         with arcpy.da.SearchCursor(
-            in_table = os.path.join(arcpy.env.workspace, "LLUR_sites_NO_overlap"), 
+            in_table = os.path.join(arcpy.env.workspace, "LLUR_sites_NO_overlap"),
             field_names = ["OBJECTID", "SHAPE@AREA", "SHAPE@"]
             ) as cursor:
             for row in cursor:
@@ -849,8 +855,8 @@ class combine_LLUR_layers_InDev(object):
         # polygon is fully contained with a "Site" polygon
 
         with arcpy.da.UpdateCursor(
-            in_table = output, 
-            field_names = [    
+            in_table = output,
+            field_names = [
                 #"FID_L1Site",       #0
                 "FID_LLUR_sites_NO_overlap",
                 #"FID_L5Acti",       #1
@@ -890,7 +896,7 @@ class combine_LLUR_layers_InDev(object):
                     cursor.deleteRow()
 
         return
-        
+
 class risk_from_category_value(object):
     '''
     Adds a new field to a GIS layer that contains values based on a lookup csv
@@ -967,7 +973,7 @@ class risk_from_category_value(object):
         params.append(output_field_count)
 
         return params
-    
+
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
         return True
@@ -1009,7 +1015,7 @@ class risk_from_category_value(object):
         LookUpTable = arcpy.da.TableToNumPyArray(LookUpTable, "*")
         LookUpTable = pd.DataFrame(LookUpTable)
 
-        # Add the risk score column based on 
+        # Add the risk score column based on
         InputTable[output_field_name] = InputTable[scoring_field].apply(
             lambda x: risk_for_cat(
                 x = x, LookUpTable = LookUpTable, empty_val = empty_val,
@@ -1025,7 +1031,7 @@ class risk_from_category_value(object):
         arcpy.da.ExtendTable(
             input_layer, id_field, InputTable, id_field, append_only=False
             )
-        
+
         row_count = arcpy.management.GetCount(input_layer)[0]
         parameters[5].value = row_count
 
@@ -1045,6 +1051,7 @@ class rank_column(object):
     def getParameterInfo(self):
 
         params = []
+        #param 0: input layer
         input_layer = arcpy.Parameter(
             displayName = "Input Layer",
             name = "input_layer",
@@ -1052,6 +1059,7 @@ class rank_column(object):
             parameterType = "Required",
             direction = "Input"
         )
+        #param 1: rank field
         ranking_field = arcpy.Parameter(
             displayName = "Ranking Field",
             name = "ranking_field",
@@ -1059,6 +1067,7 @@ class rank_column(object):
             parameterType = 'Required',
             direction = "Input"
         )
+        #param 2: ouput name
         output_field_name = arcpy.Parameter(
             displayName = "Output Field Name",
             name = "output_field_name",
@@ -1066,6 +1075,7 @@ class rank_column(object):
             parameterType = "Required",
             direction = "Input"
         )
+        #param 3: ouput count
         output_field_count = arcpy.Parameter(
             displayName="Row Count",
             name="row_count",
@@ -1082,7 +1092,7 @@ class rank_column(object):
         params.append(output_field_count)
 
         return params
-    
+
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
         return True
@@ -1111,7 +1121,7 @@ class rank_column(object):
             for row in searchCursor:
                 allValues.append(row[0])
 
-        allValues_sorted = sorted(allValues, reverse=True)  
+        allValues_sorted = sorted(allValues, reverse=True)
 
         lookup = {}
         count = 1
@@ -1134,31 +1144,6 @@ class rank_column(object):
 
         return
 
-
-        #-----------------------------------------------------------------------
-        # allValues = set()
-        # with arcpy.da.SearchCursor(
-        #     in_table = input_layer,
-        #     field_names = [ranking_field]) as searchCursor:
-        #     for row in searchCursor:
-        #         allValues.add(row[0])
- 
-        # # Create a value/rank lookup
-        # lookup = { value : rank + 1 for (rank, value) in  enumerate(sorted(allValues, reverse=True))}
-
-        # arcpy.management.AddField(in_table = input_layer, field_name = output_field_name, field_type = "DOUBLE")
-
-        # # Set the ranks on the rows
-        # with arcpy.da.UpdateCursor(input_layer, [ranking_field, output_field_name]) as updateCursor:
-        #     for row in updateCursor:
-        #         row[1] = lookup[row[0]]
-        #         updateCursor.updateRow(row)
-
-        # row_count = arcpy.management.GetCount(input_layer)[0]
-        # parameters[3].value = row_count
-
-        # return
-
 class count_numeric_range(object):
     '''
     Counts the number of fields that are within specified numeric ranges. E.g.
@@ -1171,11 +1156,11 @@ class count_numeric_range(object):
         self.label = "Count numeric range"
         self.description = "Count numeric range"
         self.canRunInBackground = False
-    
-    def getParameterInfo(self):
-        
-        params = []
 
+    def getParameterInfo(self):
+
+        params = []
+        #param 0: input
         input_layer = arcpy.Parameter(
             displayName = "Input Layer",
             name = "input_layer",
@@ -1183,6 +1168,7 @@ class count_numeric_range(object):
             parameterType = "Required",
             direction = "Input"
         )
+        #param 1: input fields
         input_fields = arcpy.Parameter(
             displayName = "Input Fields",
             name = "input_fields",
@@ -1191,6 +1177,7 @@ class count_numeric_range(object):
             direction = "Input",
             multiValue=True
         )
+        #param 2: param range
         numeric_ranges = arcpy.Parameter(
             displayName="Numeric Ranges",
             name="numeric_ranges",
@@ -1198,24 +1185,30 @@ class count_numeric_range(object):
             parameterType="Optional",
             direction="Input"
         )
-        numeric_ranges.columns = [
-            ["GPLong", "Lower Bound"],
-            ["GPLong", "Upper Bound"],
-            ["GPString", "Output Field Name"],
-            ]
-        
+
+        #param 3: ouput
+        output_field_count = arcpy.Parameter(
+            displayName="Row Count",
+            name="row_count",
+            datatype="GPLong",
+            parameterType="Derived",
+            direction="Output"
+        )
+
+
         input_fields.parameterDependencies = [input_layer.name]
-        
+
         params.append(input_layer)
         params.append(input_fields)
         params.append(numeric_ranges)
-        
+        params.append(output_field_count)
+
         return params
-        
+
     def isLicensed(self):
         """Set whether tool is licensed to execute."""
         return True
-    
+
     def updateParameters(self, parameters):
         """Modify the values and properties of parameters before internal
         validation is performed.  This method is called whenever a parameter
@@ -1227,7 +1220,7 @@ class count_numeric_range(object):
         """Modify the messages created by internal validation for each tool
         parameter.  This method is called after internal validation."""
         return
-    
+
     def execute(self, parameters, messages):
 
         # input layer
@@ -1257,7 +1250,7 @@ class count_numeric_range(object):
             arcpy.AddMessage(count_col)
             with arcpy.da.UpdateCursor(input_layer, [count_col] + input_columns) as updateCursor:
                 for row in updateCursor:
-                    
+
                     lower_bound = numeric_ranges[count_col]['lower_bound']
                     upper_bound = numeric_ranges[count_col]['upper_bound']
 
@@ -1269,11 +1262,13 @@ class count_numeric_range(object):
                     row[0] = count
 
                     updateCursor.updateRow(row)
-        
+
+        row_count = arcpy.management.GetCount(input_layer)[0]
+        parameters[4].value = row_count
         return
 
 class risk_from_numeric_range(object):
-    
+
     '''
     Adds a new field to a GIS layer that contains values based on a lookup csv
     file with the columns 'MIN', 'MAX' and 'SCORE'. The MIN and MAX columns
@@ -1330,7 +1325,7 @@ class risk_from_numeric_range(object):
             parameterType = "Required",
             direction = "Input"
         )
-        # Parameter 6: 
+        # Parameter 6:
         output_field_count = arcpy.Parameter(
             displayName="Row Count",
             name="row_count",
@@ -1396,7 +1391,7 @@ class risk_from_numeric_range(object):
         LookUpTable = arcpy.da.TableToNumPyArray(LookUpTable, "*")
         LookUpTable = pd.DataFrame(LookUpTable)
 
-        # Add the risk score column based on 
+        # Add the risk score column based on
         InputTable[output_field_name] = InputTable[scoring_field].apply(
             lambda x: risk_in_range(
                 x = x, LookUpTable = LookUpTable, empty_val = empty_val,
@@ -1404,7 +1399,7 @@ class risk_from_numeric_range(object):
                 lookup_NumericMaxCol = lookup_NumericMaxCol,
                 lookup_RiskScoreCol = lookup_RiskScoreCol
                 )
-            )        
+            )
         # Limit the fields to only ID and score
         InputTable = InputTable[[id_field, output_field_name]]
         # Convert merged DataFrame back to numpy array
@@ -1413,7 +1408,7 @@ class risk_from_numeric_range(object):
         arcpy.da.ExtendTable(
             input_layer, id_field, InputTable, id_field, append_only=False
             )
-        
+
         row_count = arcpy.management.GetCount(input_layer)[0]
         parameters[5].value = row_count
 
