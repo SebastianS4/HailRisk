@@ -17,19 +17,19 @@ Contaminated Land ArcGGIS model builder custom scripts
     
 
 Models 
-1 - Combined LURR 
-2 - GW 
-3 - Ecology 
-4 - Costal 
-5a - Surface water
-5b - Surface water 
-6 - LURR
-7a - Groundwater 
-7b - Groundwater 
-8 - Human Health 
-9 - Risk calulations 
-10 - Rank 
-11 - Multi risk 
-12 - Export to shapefile 
-13 - Site specific 
-14 - Full run 
+- 1 - Combined LURR 
+- 2 - GW 
+- 3 - Ecology 
+- 4 - Costal 
+- 5a - Surface water
+- 5b - Surface water 
+- 6 - LURR
+- 7a - Groundwater 
+- 7b - Groundwater 
+- 8 - Human Health 
+- 9 - Risk calulations 
+- 10 - Rank 
+- 11 - Multi risk 
+- 12 - Export to shapefile 
+- 13 - Site specific 
+- 14 - Full run 
